@@ -1,0 +1,65 @@
+//Google Apps Script
+//Code to be used to create a library script which has OAuth2 access to Blackbaud SKY API
+
+
+//obtain these from the app in your SKY developer account
+var CLIENT_ID = 'XXX';
+var CLIENT_SECRET = 'YYY';
+//obtain this from the subscription in your SKY developer account
+var skySubscription = 'ZZZ'
+//if access token expires, https://developer.blackbaud.com/skyapi/docs/authorization/auth-code-flow/tutorial#refresh-access-token
+//if invalid grant, need to run the doGet.
+const doGet = () => {
+	let bbService = getBBService();
+	if (!bbService.hasAccess()) {
+		let authorizationUrl = bbService.getAuthorizationUrl();
+		let template = HtmlService.createTemplate('<a href="<?= authorizationUrl ?>" target="_blank">Authorize</a>. ' + 'Reopen the page when the authorization is complete.');
+		template.authorizationUrl = authorizationUrl;
+		return template.evaluate();
+	}
+}
+const getBBService = () => OAuth2.createService('bb').setAuthorizationBaseUrl('https://oauth2.sky.blackbaud.com/authorization').setTokenUrl('https://oauth2.sky.blackbaud.com/token').setClientId(CLIENT_ID).setClientSecret(CLIENT_SECRET).setCallbackFunction('authCallback').setPropertyStore(PropertiesService.getUserProperties())
+const showRD = () => console.log(OAuth2.getRedirectUri());
+
+function authCallback(request) {
+	let rd = OAuth2.getRedirectUri();
+	let options = {
+		"method": "post",
+		"payload": {
+			"grant_type": "authorization_code",
+			code: request.parameter.code,
+			redirect_uri: rd,
+		},
+		headers: {
+			Authorization: 'Basic ' + Utilities.base64Encode(Utilities.newBlob(CLIENT_ID + ':' + CLIENT_SECRET).getBytes()),
+			'Content-Type': 'application/x-www-form-urlencoded',
+		}
+	};
+	let x = UrlFetchApp.fetch('https://oauth2.sky.blackbaud.com/token', options);
+	x = JSON.parse(x.getContentText());
+	x.dateUp = new Date();
+	for (let i in x) {
+		PropertiesService.getUserProperties().setProperty(i, x[i]);
+	}
+	return HtmlService.createHtmlOutput('Success! You can close this tab.');
+}
+
+function refreshToken() {
+	let options = {
+		"method": "post",
+		"payload": {
+			"grant_type": "refresh_token",
+			refresh_token: PropertiesService.getUserProperties().getProperty('refresh_token'),
+			preserve_refresh_token: true,
+		},
+		headers: {
+			Authorization: 'Basic ' + Utilities.base64Encode(Utilities.newBlob(CLIENT_ID + ':' + CLIENT_SECRET).getBytes()),
+			'Content-Type': 'application/x-www-form-urlencoded',
+		}
+	};
+	console.log(PropertiesService.getUserProperties().getProperty('refresh_token'))
+	var x = UrlFetchApp.fetch('https://oauth2.sky.blackbaud.com/token', options);
+	x = JSON.parse(x.getContentText());
+	PropertiesService.getUserProperties().setProperty('access_token', x.access_token)
+	return x.access_token;
+}
