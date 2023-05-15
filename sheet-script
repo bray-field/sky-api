@@ -1,0 +1,12 @@
+//Sample Google Apps Code to use in Google Sheet
+//requires sky-api/gapps-sky-api to be created and accessed as a library
+
+
+	let lists = BSky3.getBBLists({
+		lists: getLoL()
+	}).map(z => ({ ...z,
+		value: checkFix(fixComment, fixGrade, getXData(z.value))
+	}));
+	['bio', 'report_card', 'transcript'].forEach(a => {
+		lists.find(z => z.name === a).value = fixRecords[a](findList(lists, a))
+	});
