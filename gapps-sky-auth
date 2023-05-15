@@ -1,5 +1,8 @@
 //Google Apps Script
 //Code to be used to create a library script which has OAuth2 access to Blackbaud SKY API
+//includes functions to create OAUTH2 connection and refresh keys
+//requires this library 1B7FSrk5Zi6L1rSxxTDgDEUsPzlukDsi4KGuTMorsTQHhGBzBkMun4iDF in Google Apps Script
+//see https://github.com/googleworkspace/apps-script-oauth2 for detail
 
 
 //obtain these from the app in your SKY developer account
@@ -62,4 +65,44 @@ function refreshToken() {
 	x = JSON.parse(x.getContentText());
 	PropertiesService.getUserProperties().setProperty('access_token', x.access_token)
 	return x.access_token;
+}
+
+//code below allows another script using this script as library to pull Blackbaud school lists
+////return as array or object
+function getBBLists(a) {
+	let h = refreshToken();
+	return a.lists.map(z => createNList(z, h, a.returnAs));
+}
+
+function createNList(a, h, r) {
+	let pages = 1,
+		rep = [],
+		ind;
+	while (pages == 1 || ind.count > 0) {
+		console.log(`list ${a.id} pages = ${pages} ind = ${ind?ind.count:'n/a'}`)
+		ind = (getAList(a.id, h, pages));
+		rep = rep.concat(ind.results.rows)
+		pages += 1;
+	}
+	const hh = rep[0].columns.map(z => z.name);
+	rep = rep.map(z => Object.fromEntries(z.columns.map(z2 => [z2.name, z2.value])));
+	if (r === 'object') {
+		return rep
+	}
+	rep = rep.map(z => hh.map(z2 => z[z2]));
+	rep.unshift(hh);
+	return {
+		name: a.name,
+		value: rep
+	}
+}
+
+function getAList(a, h, p) {
+	return JSON.parse(UrlFetchApp.fetch(`https://api.sky.blackbaud.com/school/v1/lists/advanced/${a}?page=${p}`, {
+		headers: {
+			Authorization: 'Bearer ' + h,
+			'Bb-Api-Subscription-Key': skySubscription,
+			"Content-Type": "application/json"
+		},
+	}).getContentText());
 }
