@@ -1,18 +1,21 @@
 # sky-api
 Steps to connect Google Workspace with Blackbaud SKY API using Google Apps Script
 
-Create Google Service Account
-Creat Blackbaud account
-Create Developer Account on SKY API https://developer.blackbaud.com/
-As Admin, Install Sky API Console from the BB Marketplace in the school environment
-Create a new application in the developer account
-Connect the new application (get Application ID from #4 above)
-go to this URL https://app.blackbaud.com/marketplace/manage
-Click Manage at the top of the screen
-Click Connect App (blue button)
-for the application ID, copy and paste the ID below
-click Connect
-Go to script.google.com
+1. Create 3 Accounts:
+  Blackbaud Account (with BB ID) and Security in Education Management
+  Google "Service" account to store Google Scripts
+  SKY API Developer account at developer.blackbaud.com
+2. Create a new Application in the developer account (SKY Extract)
+  Get the application ID after it is created
+3. BB Environment Administrator needs to:
+  Install Sky API Console from the BB Marketplace in the school environment
+  Connect the SKY Extract application to the envirnoment (get Application ID from #2 above)
+  go to this URL https://app.blackbaud.com/marketplace/manage
+  Click Manage at the top of the screen
+  Click Connect App (blue button)
+  for the application ID, copy and paste the ID below
+  click Connect
+4. Go to script.google.com
 Create a new script
 Add the OAUTH2 library (ID = 1B7FSrk5Zi6L1rSxxTDgDEUsPzlukDsi4KGuTMorsTQHhGBzBkMun4iDF From https://github.com/googleworkspace/apps-script-oauth2
 Insert Code
